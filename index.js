@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
+const morgan = require("morgan");
 
 const { Note } = require("./mongo.js");
 
@@ -8,6 +9,10 @@ const app = express();
 
 app.use(express.static("dist"));
 app.use(express.json());
+
+morgan.token("body", (req) => JSON.stringify(req.body));
+
+app.use(morgan(":method :url :status :res[content-length] - :response-time ms :body"));
 
 app.get("/api/notes", (req, res) => {
   Note.find({}).then((notes) => {
@@ -25,6 +30,21 @@ app.get("/api/notes/:id", (req, res, next) => {
     .catch(next);
 });
 
+app.put("/api/notes/:id", (req, res, next) => {
+  const { content, important } = req.body;
+  const id = req.params.id;
+  Note.findById(id).then((note) => {
+    if (!note) return res.status(404).json({ Error: "Note was not found on the server" });
+
+    note.important = important;
+    note.content = content;
+    note
+      .save()
+      .then((updatedNote) => res.json(updatedNote))
+      .catch(next);
+  });
+});
+
 app.delete("/api/notes/:id", (req, res, next) => {
   const id = req.params.id;
   Note.findByIdAndDelete(id)
@@ -34,7 +54,7 @@ app.delete("/api/notes/:id", (req, res, next) => {
     .catch(next);
 });
 
-app.post("/api/notes", (req, res) => {
+app.post("/api/notes", (req, res, next) => {
   const body = req.body;
 
   if (!body.content) {
@@ -46,7 +66,10 @@ app.post("/api/notes", (req, res) => {
     important: body.important || false,
   });
 
-  newNote.save().then((savedNote) => res.json(savedNote));
+  newNote
+    .save()
+    .then((savedNote) => res.json(savedNote))
+    .catch(next);
 });
 
 const unKnownEndpoint = (req, res) => {
@@ -55,14 +78,14 @@ const unKnownEndpoint = (req, res) => {
 
 app.use(unKnownEndpoint);
 
-const PORT = process.env.PORT;
-
 const handleError = (err, req, res, next) => {
   if (err.name === "CastError") res.status(500).json({ error: "Malformatted id" });
+  else if (err.name === "ValidationError") res.status(400).json({ error: err.message });
 };
 
 app.use(handleError);
 
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
