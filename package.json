@@ -5,23 +5,16 @@
   "license": "MIT",
   "author": "Kelvin Addy",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch index.js",
+    "dev": "node --watch server.js",
     "lint": "eslint --fix ."
   },
   "dependencies": {
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^9.9.4",
-    "morgan": "^1.12.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@stylistic/eslint-plugin": "^5.10.0",
-    "eslint": "^10.10.0",
-    "globals": "^17.12.0"
+    "mongoose": "^9.9.4"
   }
 }
