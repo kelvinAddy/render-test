@@ -11,20 +11,25 @@ exports.getNoteById = async (req, res, next) => {
   else res.status(404).end();
 };
 
-exports.putNoteById = (req, res, next) => {
-  const { content, important } = req.body;
-  Note.findById(req.params.id).then((note) => {
-    if (!note) {
-      return res.status(404).end();
-    }
-    note.important = important;
-    note.content = content;
-    note
-      .save()
-      .then((updatedNote) => res.json(updatedNote))
-      .catch(next);
-  });
+exports.putNoteById = async (req, res, next) => {
+  if (!req.body) {
+    return res.status(400).json({ error: 'Data is invalid' });
+  }
+
+  if (!req.body.content) {
+    return res.status(400).json({ error: 'Content is missing' });
+  }
+
+  const fetchedNote = await Note.findById(req.params.id);
+  if (!fetchedNote) {
+    return res.status(404).end();
+  }
+  fetchedNote.important = req.body.important;
+  fetchedNote.content = req.body.content;
+  const savedNote = await fetchedNote.save();
+  res.json(savedNote);
 };
+
 exports.deleteNoteById = async (req, res, next) => {
   await Note.findByIdAndDelete(req.params.id);
   res.status(204).end();
