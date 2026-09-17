@@ -103,6 +103,22 @@ describe('when there are some notes initially in db', () => {
       assert.strictEqual(notesAtEnd.length, helper.initialNotes.length - 1);
     });
   });
+  describe('updating notes', () => {
+    test.only('succeeds with status 200 with valid note data', async () => {
+      const notesAtStart = await helper.notesInDb();
+
+      const noteToUpdate = notesAtStart[0];
+      noteToUpdate.content = 'Kelvin is Xerus';
+
+      const results = await api
+        .put(`/api/notes/${noteToUpdate.id}`)
+        .send(noteToUpdate)
+        .expect(200)
+        .expect('Content-Type', /application\/json/);
+
+      assert.deepStrictEqual(results.body, noteToUpdate);
+    });
+  });
 });
 
 after(async () => {
