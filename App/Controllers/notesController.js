@@ -1,21 +1,17 @@
 const Note = require('../Models/note');
 
-exports.displayAllNotes = (req, res) => {
-  Note.find({}).then((notes) => {
-    res.json(notes);
-  });
+exports.getAllNotes = async (req, res) => {
+  const notes = await Note.find({});
+  res.json(notes);
 };
 
-exports.displayNoteById = (req, res, next) => {
-  Note.findById(req.params.id)
-    .then((note) => {
-      if (note) res.json(note);
-      else res.status(404).end();
-    })
-    .catch(next);
+exports.getNoteById = async (req, res, next) => {
+  const fetchedNote = await Note.findById(req.params.id);
+  if (fetchedNote) res.json(fetchedNote);
+  else res.status(404).end();
 };
 
-exports.editNoteById = (req, res, next) => {
+exports.putNoteById = (req, res, next) => {
   const { content, important } = req.body;
   Note.findById(req.params.id).then((note) => {
     if (!note) {
@@ -29,28 +25,22 @@ exports.editNoteById = (req, res, next) => {
       .catch(next);
   });
 };
-exports.deleteNoteById = (req, res, next) => {
-  Note.findByIdAndDelete(req.params.id)
-    .then(() => {
-      res.status(204).end();
-    })
-    .catch(next);
+exports.deleteNoteById = async (req, res, next) => {
+  await Note.findByIdAndDelete(req.params.id);
+  res.status(204).end();
 };
 
-exports.addNote = (req, res, next) => {
+exports.postNote = async (req, res, next) => {
   const body = req.body;
 
   if (!body.content) {
     return res.status(400).json({ error: 'content missing' });
   }
 
-  const newNote = new Note({
+  const savedNote = await Note.create({
     content: body.content,
     important: body.important || false,
   });
 
-  newNote
-    .save()
-    .then((savedNote) => res.json(savedNote))
-    .catch(next);
+  res.status(201).json(savedNote);
 };
