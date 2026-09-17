@@ -1,4 +1,4 @@
-const notesController = require('../controllers/notesController');
+const notesController = require('../Controllers/notesController');
 const router = require('express').Router();
 
 router.get('/', notesController.getAllNotes);
