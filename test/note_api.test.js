@@ -6,6 +6,7 @@ const assert = require('node:assert');
 const helper = require('./test_helper');
 const api = supertest(app);
 const Note = require('../App/Models/note');
+const User = require('../App/Models/user');
 
 describe('when there are some notes initially in db', () => {
   beforeEach(async () => {
@@ -60,9 +61,13 @@ describe('when there are some notes initially in db', () => {
 
   describe('addition of a new note', () => {
     test('a valid note can be added', async () => {
+      const users = await User.find({});
+      const noteCreator = users[0];
+
       const newNote = {
         content: 'async/await simplifies making async calls',
         important: true,
+        userId: noteCreator._id,
       };
 
       await api
