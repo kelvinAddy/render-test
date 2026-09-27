@@ -5,10 +5,9 @@ const logger = require('./App/utils/logger');
 
 connectToDb()
   .then(() => {
-    logger.info('Connecting to the Database.......');
     logger.info('Connected to MongoDB');
-    app.listen(config.PORT, () =>
-      logger.info(`Server is running on Port ${config.PORT}`),
+    app.listen(app.get('port'), () =>
+      logger.info(`Server is running on Port ${app.get('port')}`),
     );
   })
   .catch((error) => {

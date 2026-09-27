@@ -10,6 +10,9 @@ exports.getUsers = async (req, res) => {
 };
 
 exports.postUser = async (req, res) => {
+  if (!req.body?.username || !req.body?.password)
+    return res.status(400).json({ error: 'Invalid data provided' });
+
   const { username, name, password } = req.body;
 
   const saltRounds = 10;

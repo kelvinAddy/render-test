@@ -1,4 +1,6 @@
 const logger = require('../utils/logger');
+const jwt = require('jsonwebtoken');
+const User = require('../Models/user');
 
 const requestLogger = (req, res, next) => {
   logger.info('Method:', req.method);
@@ -8,27 +10,60 @@ const requestLogger = (req, res, next) => {
   next();
 };
 
+const tokenExtractor = (req, res, next) => {
+  req.token = null;
+  const authorization = req.get('authorization');
+  if (authorization && authorization.startsWith('Bearer ')) {
+    authorization.replace('Bearer ', '');
+    req.token = authorization;
+  }
+
+  next();
+};
+
+const userExtractor = async (req, res, next) => {
+  const decodedToken = jwt.verify(req.token, process.env.SECRET);
+
+  if (!decodedToken.id)
+    return res.status(401).json({ error: 'Token is invalid' });
+
+  const user = await User.findById(decodedToken.id);
+  req.user = user;
+
+  next();
+};
+
 const unKnownEndpoint = (req, res) => {
   res.status(400).json({ error: 'Unknown Endpoint' });
 };
 
-const handleError = (err, req, res, next) => {
-  if (err.name === 'CastError')
-    return res.status(400).json({ error: 'Malformatted id' });
-  else if (err.name === 'ValidationError')
-    return res.status(400).json({ error: err.message });
-  else if (
-    err.name === 'MongoServerError' &&
-    err.message.includes('E11000 duplicate key error')
-  ) {
-    return res.status(400).json({ error: 'username must be unique' });
-  } else if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({ error: 'token is missing or invalid' });
-  } else if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({ error: 'token expired' });
-  }
+const handleError = (error, req, res, next) => {
+  switch (true) {
+    case error.name === 'CastError':
+      return res.status(400).json({ error: 'Malformed id' });
 
-  next(err);
+    case error.name === 'ValidationError':
+      return res.status(400).json({ error: error.message });
+
+    case error.name === 'MongoServerError' &&
+      error.message.includes('E11000 duplicate key error'):
+      res.status(400).json({ error: 'username must be unique' });
+
+    case error.name === 'JsonWebTokenError':
+      return res.status(401).json({ error: 'token is missing or invalid' });
+
+    case error.name === 'TokenExpiredError':
+      return res.status(401).json({ error: 'token expired' });
+
+    default:
+      next(error);
+  }
 };
 
-module.exports = { requestLogger, unKnownEndpoint, handleError };
+module.exports = {
+  requestLogger,
+  tokenExtractor,
+  userExtractor,
+  unKnownEndpoint,
+  handleError,
+};
