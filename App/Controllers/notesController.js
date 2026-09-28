@@ -41,15 +41,15 @@ exports.deleteNoteById = async (req, res) => {
 };
 
 exports.postNote = async (req, res) => {
-  if (!body.content) {
+  if (!req.body?.content) {
     return res.status(400).json({ error: 'content missing' });
   }
 
   const user = req.user;
 
   const savedNote = await Note.create({
-    content: body.content,
-    important: body.important || false,
+    content: req.body.content,
+    important: req.body?.important || false,
     user: user._id,
   });
 
